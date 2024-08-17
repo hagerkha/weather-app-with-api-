@@ -1,0 +1,85 @@
+import 'package:flutter/material.dart';
+import '../servce/GetWeather.dart';
+
+class SearchResultPage extends StatefulWidget {
+  const SearchResultPage({Key? key}) : super(key: key);
+
+  @override
+  _SearchResultPageState createState() => _SearchResultPageState();
+}
+
+class _SearchResultPageState extends State<SearchResultPage> {
+  final TextEditingController _controller = TextEditingController();
+  Map<String, dynamic>? _weatherData;
+  String? _error;
+
+  Future<void> _searchWeather(String cityName) async {
+    GetWeather service = GetWeather();
+    try {
+      Map<String, dynamic> weather = await service.getWeather(cityName: cityName);
+      setState(() {
+        _weatherData = weather;
+        _error = null;
+      });
+    } catch (e) {
+      setState(() {
+        _weatherData = null;
+        _error = e.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Search a City'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _controller,
+              onSubmitted: _searchWeather,
+              decoration: const InputDecoration(
+                contentPadding: EdgeInsets.symmetric(vertical: 30.0, horizontal: 24.0),
+                suffixIcon: Icon(Icons.search),
+                labelText: 'Search',
+                border: OutlineInputBorder(),
+                hintText: 'Enter a city',
+              ),
+            ),
+            const SizedBox(height: 20),
+            _weatherData != null
+                ? WeatherDisplay(weatherData: _weatherData!)
+                : _error != null
+                    ? Text(_error!, style: TextStyle(color: Colors.red))
+                    : Container(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class WeatherDisplay extends StatelessWidget {
+  final Map<String, dynamic> weatherData;
+
+  const WeatherDisplay({required this.weatherData, Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final location = weatherData['location']['name'];
+    final tempC = weatherData['current']['temp_c'];
+    final condition = weatherData['current']['condition']['text'];
+
+    return Column(
+      children: [
+        Text('Location: $location', style: TextStyle(fontSize: 20)),
+        Text('Temperature: $tempC°C', style: TextStyle(fontSize: 20)),
+        Text('Condition: $condition', style: TextStyle(fontSize: 20)),
+      ],
+    );
+  }
+}
